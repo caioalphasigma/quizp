@@ -141,8 +141,7 @@ let playerName = 'Jogador';
 let totalTimeMs = 0;
 let totalErrors = 0;
 let currentQuizSet = []; 
-let selectedAnswer = null; 
-let isAnswerConfirmed = false; 
+let isAnswered = false; // Novo estado para controlar se a resposta já foi dada
 let quizResults = []; 
 
 // --- CONSTANTES E DADOS FIXOS ---
@@ -159,7 +158,7 @@ const fullScreenMessage = document.getElementById('fullscreen-message');
 
 const startButton = document.getElementById('start-button');
 const playerNameInput = document.getElementById('player-name');
-const actionButton = document.getElementById('action-button'); 
+const actionButton = document.getElementById('action-button'); // Mantido no HTML, mas escondido/ignorado no JS
 const restartButton = document.getElementById('restart-button');
 const adminButton = document.getElementById('admin-button');
 const questionArea = document.getElementById('question-area');
@@ -265,17 +264,15 @@ function loadQuestion() {
         return;
     }
 
+    // Reinicia o estado da pergunta
+    isAnswered = false; 
+
     const questionData = currentQuizSet[currentQuestionIndex];
-    // Removendo o uso do asterisco para negrito
     questionArea.innerHTML = `<span style="font-weight: bold;">Questão ${currentQuestionIndex + 1}/${QUIZ_SIZE}:</span> ${questionData.question}`;
     optionsContainer.innerHTML = '';
     
-    // Reinicia o estado da resposta
-    selectedAnswer = null;
-    isAnswerConfirmed = false; 
-    actionButton.classList.add('disabled');
-    actionButton.textContent = 'Confirmar';
-    actionButton.onclick = confirmAnswer; 
+    // Esconde/Ignora o actionButton (botão confirmar/avançar)
+    actionButton.style.display = 'none'; 
 
     // Embaralha as opções
     let shuffledOptions = [...questionData.options];
@@ -286,48 +283,32 @@ function loadQuestion() {
         button.className = 'btn option-btn';
         button.textContent = option.text;
         button.dataset.isCorrect = option.isCorrect; 
-        button.onclick = () => selectOption(button);
+        // 🎯 O clique na opção AGORA confirma a resposta
+        button.onclick = () => selectAndConfirmAnswer(button);
         optionsContainer.appendChild(button);
     });
 }
 
-function selectOption(selectedButton) {
-    if (isAnswerConfirmed) return;
-    
-    document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
-    
-    selectedButton.classList.add('selected');
-    
-    selectedAnswer = selectedButton;
-    
-    actionButton.classList.remove('disabled');
-    actionButton.onclick = confirmAnswer; 
-}
+function selectAndConfirmAnswer(selectedButton) {
+    if (isAnswered) return; // Impede múltiplos cliques
 
-function confirmAnswer() {
-    if (!selectedAnswer) {
-        showInternalNotification("Por favor, selecione uma resposta antes de confirmar.");
-        return;
-    }
-    
-    isAnswerConfirmed = true;
+    isAnswered = true; // Marca como respondido
 
-    // Desabilita as opções e remove a interação
+    // Desabilita todas as opções
     document.querySelectorAll('.option-btn').forEach(btn => {
         btn.onclick = null;
-        btn.classList.add('disabled');
-        btn.classList.remove('selected'); 
+        btn.classList.add('disabled-after-check'); 
     });
 
-    const isCorrect = selectedAnswer.dataset.isCorrect === 'true';
+    const isCorrect = selectedButton.dataset.isCorrect === 'true';
     const currentQuestion = currentQuizSet[currentQuestionIndex];
     
     if (isCorrect) {
         score += POINTS_PER_QUESTION;
-        selectedAnswer.classList.add('correct');
+        selectedButton.classList.add('correct');
     } else {
         totalErrors++;
-        selectedAnswer.classList.add('incorrect');
+        selectedButton.classList.add('incorrect');
         
         // Realça a resposta correta
         Array.from(optionsContainer.children).forEach(btn => {
@@ -342,28 +323,16 @@ function confirmAnswer() {
         question: currentQuestion.question,
         answeredCorrectly: isCorrect,
         correctAnswerText: currentQuestion.options.find(opt => opt.isCorrect).text,
-        chosenAnswerText: selectedAnswer.textContent
+        chosenAnswerText: selectedButton.textContent
     });
 
-    // Altera o botão para avançar
-    actionButton.onclick = nextQuestion;
-    actionButton.classList.remove('disabled'); 
-    
-    if (currentQuestionIndex === currentQuizSet.length - 1) {
-        actionButton.textContent = 'Ver Resultado Final';
-    } else {
-        actionButton.textContent = 'Próxima Pergunta';
-    }
+    // Avança para a próxima pergunta após um breve delay visual
+    setTimeout(() => {
+        currentQuestionIndex++;
+        loadQuestion();
+    }, 1500); // 1.5 segundos de delay
 }
 
-function nextQuestion() {
-    if (!isAnswerConfirmed) {
-         showInternalNotification("Confirme sua resposta antes de avançar.");
-         return; 
-    }
-    currentQuestionIndex++;
-    loadQuestion();
-}
 
 function finishQuiz() {
     stopTimer();
@@ -374,7 +343,6 @@ function finishQuiz() {
     document.getElementById('final-score').textContent = finalScore;
     document.getElementById('final-time').textContent = `${timeFormatted}s`;
     document.getElementById('final-errors').textContent = totalErrors;
-    // Removendo o asterisco para negrito
     finalScoreInfo.innerHTML = `Parabéns, <span style="font-weight: bold;">${playerName}</span>!`;
 
     // Lógica de Recompensa
@@ -382,7 +350,6 @@ function finishQuiz() {
     let rewardClass = '';
 
     if (finalScore >= 65) {
-        // Removendo o asterisco para negrito
         rewardText = 'Excelente! Você ganhou um <span style="font-weight: bold;">BOMBOM</span> (exceto se for muito novo, é claro)! 🍫';
         rewardClass = 'bombom';
     } else if (finalScore >= 40) {
@@ -517,7 +484,6 @@ function executeCommand() {
             displayScores();
             output = '✅ Ranking e placares zerados com sucesso.';
             break;
-        // O comando @msg foi removido daqui
         case '':
             output = 'Digite um comando.';
             break;
@@ -529,7 +495,6 @@ function executeCommand() {
     adminOutput.textContent = `> ${command}\n${output}`;
 }
 
-// A função openFullscreenMessage não é mais usada, mas mantive closeFullscreenMessage para limpar o modal
 function closeFullscreenMessage() {
     document.getElementById('fullscreen-message').classList.remove('active');
 }
@@ -546,6 +511,9 @@ executeButton.addEventListener('click', executeCommand);
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('quiz-area').prepend(internalNotification);
+    
+    // Oculta o botão de Ação ao iniciar (agora o clique na opção avança)
+    document.getElementById('action-button').style.display = 'none'; 
     
     displayScores();
     showScreen('start-screen');
