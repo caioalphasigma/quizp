@@ -69,15 +69,15 @@ h1 {
     cursor: not-allowed;
 }
 
-/* 🎯 POSICIONAMENTO DO PAINEL (Canto Inferior DIREITO) */
+/* 🎯 PAINEL: Coloca o botão fora da caixa branca (absoluto para o corpo) */
 .small-panel-btn {
-    position: absolute;
+    position: fixed; /* fixo na tela, fora da div .screen */
     bottom: 15px;
-    right: 15px; /* MUDANÇA: direita */
-    left: auto;  /* MUDANÇA: remove a esquerda */
+    right: 15px; 
+    left: auto; 
     padding: 8px 12px;
     font-size: 0.8em;
-    z-index: 10;
+    z-index: 100; /* Garante que fique acima de tudo */
     background-color: #ffc107; 
     color: #333;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -133,6 +133,7 @@ h1 {
     margin-bottom: 20px;
 }
 
+/* 🎯 NOVO: As opções agora contêm a lógica de confirmar e avançar */
 .option-btn {
     padding: 15px;
     border: 2px solid #ccc;
@@ -151,14 +152,13 @@ h1 {
     background-color: #e2e6ea;
 }
 
-/* DESTAQUE: Borda grossa para a opção selecionada (Antes de confirmar) */
-.option-btn.selected {
-    border: 4px solid #007bff; 
-    background-color: #eaf3ff; 
-    font-weight: bold;
+/* DESTAQUE: Opções desabilitadas após a resposta */
+.option-btn.disabled-after-check {
+    pointer-events: none; /* Impede novos cliques */
+    opacity: 0.8;
 }
 
-/* Feedback de Resposta (Após Confirmar) */
+/* Feedback de Resposta (Após Selecionar) */
 .option-btn.correct {
     background-color: #d4edda; 
     border-color: #28a745;
@@ -358,43 +358,4 @@ h1 {
     font-size: 0.9em;
     white-space: pre-wrap;
     word-wrap: break-word;
-}
-
-/* --- SUPORTE SIMPLES PARA CELULAR --- */
-/* 🎯 POSICIONAMENTO DO SUPORTE (Canto Inferior ESQUERDO) */
-#phone-stand {
-    position: fixed;
-    bottom: 20px;
-    left: 20px; /* MUDANÇA: esquerda */
-    right: auto; /* MUDANÇA: remove a direita */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    z-index: 100;
-    transform: scale(0.6); 
-}
-
-.stand-base {
-    width: 120px;
-    height: 15px;
-    background-color: #6c757d;
-    border-radius: 5px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
-}
-
-.stand-pillar {
-    width: 10px;
-    height: 50px;
-    background-color: #495057;
-    border-radius: 5px 5px 0 0;
-    transform: rotate(15deg) translateY(5px);
-}
-
-.stand-holder {
-    width: 70px;
-    height: 10px;
-    background-color: #6c757d;
-    border-radius: 0 0 5px 5px;
-    transform: rotate(15deg) translateX(25px) translateY(-55px);
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
