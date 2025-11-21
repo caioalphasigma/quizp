@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz da Reciclagem</title>
+    <link rel="stylesheet" href="style.css"> 
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='%2328a745' d='M9 2H15V4H9V2ZM17 4H7V22H17V4ZM19 4H21V22H19V4Z'/%3E%3C/svg%3E" type="image/svg+xml">
+</head>
+<body>
+
+    <div id="start-screen" class="screen active">
+        <h1>♻️ Quiz da Reciclagem ♻️</h1>
+        <h2>Teste seu conhecimento sobre os Códigos Plásticos</h2>
+        <p>Prepare-se: Responda as 7 perguntas o mais rápido e corretamente possível!</p>
+        <div class="input-group">
+            <label for="player-name">Seu Nome:</label>
+            <input type="text" id="player-name" placeholder="Digite seu nome (máx. 25 caracteres)" maxlength="25">
+        </div>
+        <button id="start-button" class="btn primary">INICIAR QUIZ</button>
+        
+        <button id="admin-button" class="btn small-panel-btn">Painel</button>
+        
+        <div class="ranking-preview">
+            <h3>🏆 Ranking dos Campeões 🏆</h3>
+            <div id="ranking-status" class="status-msg">Nenhum jogador ainda. Seja o primeiro!</div>
+            <table id="high-scores">
+                </table>
+        </div>
+    </div>
+
+    <div id="quiz-area" class="screen">
+        <div class="header">
+            <span id="player-display"></span>
+            <span id="time-display">Tempo: <span id="time-value">0,000s</span></span>
+        </div>
+        
+        <div id="question-container">
+            <p id="question-area"></p>
+        </div>
+        
+        <div id="options-container" class="options-grid">
+            </div>
+        
+        <button id="action-button" class="btn disabled">Confirmar</button>
+    </div>
+
+    <div id="result-screen" class="screen">
+        <h1>🏁 Quiz Finalizado! 🏁</h1>
+        <h2 id="final-score-info"></h2>
+        
+        <div class="result-details">
+            <p>Pontuação: <span id="final-score">0</span> pontos (de 100)</p>
+            <p>Tempo Total: <span id="final-time">0,000s</span></p>
+            <p>Erros Totais: <span id="final-errors">0</span></p>
+        </div>
+
+        <div id="reward-message" class="reward-box">
+            </div>
+
+        <div id="results-summary">
+            </div>
+
+        <button id="restart-button" class="btn primary">Voltar para o Lobby</button>
+    </div>
+
+    <div id="fullscreen-message" class="modal-overlay">
+        <div class="modal-content">
+            <h1 id="modal-text"></h1>
+            <button class="btn primary" onclick="closeFullscreenMessage()">Fechar Mensagem</button>
+        </div>
+    </div>
+
+    <div id="admin-panel" class="modal-overlay">
+        <div class="modal-content small-panel">
+            <h3>💻 Painel de Controle 💻</h3>
+            <p>Use o comando: <code>@reset</code></p>
+            <input type="text" id="admin-input" placeholder="Digite o comando...">
+            <button id="execute-button" class="btn primary">EXECUTAR</button>
+            <div id="admin-output" class="output-log">Pronto para comandos.</div>
+            <button class="btn secondary" onclick="closeAdminPanel()">Fechar Painel</button>
+        </div>
+    </div>
+    
+    <div id="phone-stand">
+        <div class="stand-base"></div>
+        <div class="stand-pillar"></div>
+        <div class="stand-holder"></div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
