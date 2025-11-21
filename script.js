@@ -141,13 +141,15 @@ let playerName = 'Jogador';
 let totalTimeMs = 0;
 let totalErrors = 0;
 let currentQuizSet = []; 
-let isAnswered = false; // Novo estado para controlar se a resposta já foi dada
+let selectedAnswer = null; 
+let isAnswerConfirmed = false; // Estado do feedback visual (correto/incorreto)
 let quizResults = []; 
 
 // --- CONSTANTES E DADOS FIXOS ---
 const MAX_NAME_LENGTH = 25; 
 const QUIZ_SIZE = 7; 
 const POINTS_PER_QUESTION = 100 / QUIZ_SIZE; 
+const ADVANCE_DELAY_MS = 1000; // Tempo em milissegundos para mostrar o feedback antes de avançar
 
 // --- ELEMENTOS DO DOM ---
 const startScreen = document.getElementById('start-screen');
@@ -158,7 +160,7 @@ const fullScreenMessage = document.getElementById('fullscreen-message');
 
 const startButton = document.getElementById('start-button');
 const playerNameInput = document.getElementById('player-name');
-const actionButton = document.getElementById('action-button'); // Mantido no HTML, mas escondido/ignorado no JS
+const actionButton = document.getElementById('action-button'); 
 const restartButton = document.getElementById('restart-button');
 const adminButton = document.getElementById('admin-button');
 const questionArea = document.getElementById('question-area');
@@ -264,15 +266,20 @@ function loadQuestion() {
         return;
     }
 
-    // Reinicia o estado da pergunta
-    isAnswered = false; 
-
     const questionData = currentQuizSet[currentQuestionIndex];
+    // Uso de <span> com style="font-weight: bold;" para negrito
     questionArea.innerHTML = `<span style="font-weight: bold;">Questão ${currentQuestionIndex + 1}/${QUIZ_SIZE}:</span> ${questionData.question}`;
     optionsContainer.innerHTML = '';
     
-    // Esconde/Ignora o actionButton (botão confirmar/avançar)
-    actionButton.style.display = 'none'; 
+    // Reinicia o estado da resposta
+    selectedAnswer = null;
+    isAnswerConfirmed = false; 
+    
+    // Configura o botão de ação para "Confirmar" e o desabilita
+    actionButton.style.display = 'block'; // Mostra o botão
+    actionButton.classList.add('disabled');
+    actionButton.textContent = 'Confirmar';
+    actionButton.onclick = confirmAnswer; 
 
     // Embaralha as opções
     let shuffledOptions = [...questionData.options];
@@ -283,32 +290,53 @@ function loadQuestion() {
         button.className = 'btn option-btn';
         button.textContent = option.text;
         button.dataset.isCorrect = option.isCorrect; 
-        // 🎯 O clique na opção AGORA confirma a resposta
-        button.onclick = () => selectAndConfirmAnswer(button);
+        // Clica para selecionar 
+        button.onclick = () => selectOption(button);
         optionsContainer.appendChild(button);
     });
 }
 
-function selectAndConfirmAnswer(selectedButton) {
-    if (isAnswered) return; // Impede múltiplos cliques
+function selectOption(selectedButton) {
+    if (isAnswerConfirmed) return; // Não pode selecionar se já confirmou
+    
+    // Remove o destaque de seleção anterior
+    document.querySelectorAll('.option-btn').forEach(btn => btn.classList.remove('selected'));
+    
+    // Adiciona o destaque de seleção atual
+    selectedButton.classList.add('selected');
+    
+    selectedAnswer = selectedButton;
+    
+    // Habilita o botão 'Confirmar'
+    actionButton.classList.remove('disabled');
+    actionButton.onclick = confirmAnswer; 
+}
 
-    isAnswered = true; // Marca como respondido
+function confirmAnswer() {
+    if (!selectedAnswer) {
+        showInternalNotification("Por favor, selecione uma resposta antes de confirmar.");
+        return;
+    }
+    
+    isAnswerConfirmed = true;
 
-    // Desabilita todas as opções
+    // Desabilita as opções e o botão Confirmar
     document.querySelectorAll('.option-btn').forEach(btn => {
         btn.onclick = null;
-        btn.classList.add('disabled-after-check'); 
+        btn.classList.remove('selected'); 
     });
+    actionButton.classList.add('disabled'); 
+    actionButton.onclick = null; 
 
-    const isCorrect = selectedButton.dataset.isCorrect === 'true';
+    const isCorrect = selectedAnswer.dataset.isCorrect === 'true';
     const currentQuestion = currentQuizSet[currentQuestionIndex];
     
     if (isCorrect) {
         score += POINTS_PER_QUESTION;
-        selectedButton.classList.add('correct');
+        selectedAnswer.classList.add('correct');
     } else {
         totalErrors++;
-        selectedButton.classList.add('incorrect');
+        selectedAnswer.classList.add('incorrect');
         
         // Realça a resposta correta
         Array.from(optionsContainer.children).forEach(btn => {
@@ -323,14 +351,14 @@ function selectAndConfirmAnswer(selectedButton) {
         question: currentQuestion.question,
         answeredCorrectly: isCorrect,
         correctAnswerText: currentQuestion.options.find(opt => opt.isCorrect).text,
-        chosenAnswerText: selectedButton.textContent
+        chosenAnswerText: selectedAnswer.textContent
     });
 
-    // Avança para a próxima pergunta após um breve delay visual
+    // 🎯 NOVO: Avança automaticamente após um pequeno delay para mostrar o feedback visual
     setTimeout(() => {
         currentQuestionIndex++;
-        loadQuestion();
-    }, 1500); // 1.5 segundos de delay
+        loadQuestion(); // loadQuestion() irá chamar finishQuiz() se for a última
+    }, ADVANCE_DELAY_MS); 
 }
 
 
@@ -343,6 +371,7 @@ function finishQuiz() {
     document.getElementById('final-score').textContent = finalScore;
     document.getElementById('final-time').textContent = `${timeFormatted}s`;
     document.getElementById('final-errors').textContent = totalErrors;
+    // Uso de <span> com style="font-weight: bold;" para negrito
     finalScoreInfo.innerHTML = `Parabéns, <span style="font-weight: bold;">${playerName}</span>!`;
 
     // Lógica de Recompensa
@@ -511,9 +540,6 @@ executeButton.addEventListener('click', executeCommand);
 
 document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('quiz-area').prepend(internalNotification);
-    
-    // Oculta o botão de Ação ao iniciar (agora o clique na opção avança)
-    document.getElementById('action-button').style.display = 'none'; 
     
     displayScores();
     showScreen('start-screen');
